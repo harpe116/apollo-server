@@ -26,10 +26,9 @@ describe('lifecycle hooks', () => {
       experimental_didUpdateComputedFederationConfig: jest.fn(),
     });
 
-    const { interval } = await gateway.load();
+    await gateway.load();
 
     expect(experimental_updateServiceDefinitions).toBeCalled();
-    clearInterval(interval);
   });
 
   it('calls experimental_didFailComposition with a bad config', async done => {
@@ -60,7 +59,7 @@ describe('lifecycle hooks', () => {
     }
   });
 
-  it('calls experimental_didUpdateComposition on schema update', async done => {
+  fit('calls experimental_didUpdateComposition on schema update', async done => {
     const update = jest.fn();
     update.mockImplementationOnce(async (config: GatewayConfig) => {
       return [serviceDefinitions, true];
@@ -84,15 +83,13 @@ describe('lifecycle hooks', () => {
     const experimental_didUpdateComposition = jest.fn();
 
     const gateway = new ApolloGateway({
-      serviceList: serviceDefinitions,
       experimental_updateServiceDefinitions: update,
       experimental_pollInterval: 10,
       experimental_didUpdateComposition,
-      debug: true,
     });
 
-    await gateway.load();
-    await new Promise(resolve => setTimeout(resolve, 20));
+    const { interval } = await gateway.load();
+    await new Promise(resolve => setTimeout(resolve, 30));
 
     const {
       calls: [firstCall, secondCall],
@@ -104,8 +101,8 @@ describe('lifecycle hooks', () => {
     expect(firstCall[0].schema).toBeDefined();
     expect(firstCall[1]).toBeUndefined();
 
-    expect(secondCall[0].schema).toBeDefined();
     // second call should have a previous schema
+    expect(secondCall[0].schema).toBeDefined();
     expect(secondCall[1].schema).toBeDefined();
 
     clearInterval(interval);
